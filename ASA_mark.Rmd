@@ -9,5 +9,8 @@ Import et traitement des données:
 ```{r}
 data = read.csv("data.csv", header = T)
 data = data[,-1]
+data[,1] = as.factor(data[,1])
+data[,2] = as.factor(data[,2])
+data[,3] = as.factor(data[,3])
 ```
 
