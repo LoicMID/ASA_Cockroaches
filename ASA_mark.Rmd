@@ -13,6 +13,7 @@ library(FactoMineR)
 library(factoextra)
 library(glmmTMB)
 library(ggplot2)
+library(MASS)
 ```
 
 
@@ -33,6 +34,29 @@ data_cor = data[,4:13]
 ggpairs(data_cor) 
 ```
 
+ACP des différentes variables
+```{r}
+data_ACP = data[,4:13] 
+ACP = PCA(data_ACP)
+
+fviz_pca_ind(ACP,
+             geom.ind = "point",      # Utiliser des points pour les individus
+             col.ind = data$Treatment, # Colorier selon la variable Treatment
+             palette = "jco",         # Palette de couleurs (modifiable)
+             addEllipses = TRUE,      # Ajouter des ellipses par groupe de traitement
+             legend.title = "Traitement")
+
+# En conservant seulement les variables les moins corrélées (OTM, Head_area, Head_DNA)
+data_ACP2 = data[,c(4,6,13)]
+ACP2 = PCA(data_ACP2)
+
+fviz_pca_ind(ACP2,
+             geom.ind = "point",      # Utiliser des points pour les individus
+             col.ind = data$Treatment, # Colorier selon la variable Treatment
+             palette = "jco",         # Palette de couleurs (modifiable)
+             addEllipses = TRUE,      # Ajouter des ellipses par groupe de traitement
+             legend.title = "Traitement")
+```
 
 Dotchart OTM avec couleur en fct du traitement
 ```{r}
@@ -47,7 +71,7 @@ legend("topright", legend=levels(classes), col=couleurs, pch=16)
 GLMM avec distribution gamma zero inflated
 ```{r}
 mod_zi_gamma <- glmmTMB(
-  sqrt(Olive_Tail_Moment+1) ~ Treatment + (1 | ID/PIC), # OTM+1 pour éviter les négatifs, et effet aléatoire "photo" imbriqué dans "individu"
+  Olive_Tail_Moment+1 ~ Treatment + (1 | ID/PIC), # OTM+1 pour éviter les négatifs, et effet aléatoire "photo" imbriqué dans "individu"
   family = ziGamma(link = "log"),  
   data = data
 )
@@ -64,4 +88,11 @@ ggplot(data, aes(x = fitted_values, y = residuals, color = Treatment)) +
   labs(x = "Valeurs Ajustées", y = "Résidus", color = "Traitement") +
   theme_minimal() +
   theme(legend.position = "right")
+```
+
+
+
+Résidus vs. OTM
+```{r}
+plot(data$Olive_Tail_Moment,residuals)
 ```
