@@ -12,6 +12,7 @@ library(GGally)
 library(FactoMineR)
 library(factoextra)
 library(glmmTMB)
+library(ggplot2)
 ```
 
 
@@ -43,6 +44,24 @@ dotchart(data$Olive_Tail_Moment, pch=16, col=couleurs_points, xlab="OTM")
 legend("topright", legend=levels(classes), col=couleurs, pch=16)
 ```
 
-
+GLMM avec distribution gamma zero inflated
 ```{r}
+mod_zi_gamma <- glmmTMB(
+  sqrt(Olive_Tail_Moment+1) ~ Treatment + (1 | ID/PIC), # OTM+1 pour éviter les négatifs, et effet aléatoire "photo" imbriqué dans "individu"
+  family = ziGamma(link = "log"),  
+  data = data
+)
+
+
+# Vérification des résidus
+summary(mod_zi_gamma)
+residuals <- residuals(mod_zi_gamma)
+fitted_values <- fitted(mod_zi_gamma)
+plot(fitted_values,residuals)
+
+ggplot(data, aes(x = fitted_values, y = residuals, color = Treatment)) +
+  geom_point(alpha = 0.6) +
+  labs(x = "Valeurs Ajustées", y = "Résidus", color = "Traitement") +
+  theme_minimal() +
+  theme(legend.position = "right")
 ```
