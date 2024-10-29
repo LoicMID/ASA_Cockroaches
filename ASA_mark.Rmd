@@ -5,6 +5,17 @@ date: "2024-10-29"
 output: html_document
 ---
 
+
+Packages:
+```{r}
+library(GGally)
+library(FactoMineR)
+library(factoextra)
+library(glmmTMB)
+```
+
+
+
 Import et traitement des données:
 ```{r}
 data = read.csv("data.csv", header = T)
@@ -14,3 +25,24 @@ data[,2] = as.factor(data[,2])
 data[,3] = as.factor(data[,3])
 ```
 
+
+Corrélations entre variables:
+```{r}
+data_cor = data[,4:13]
+ggpairs(data_cor) 
+```
+
+
+Dotchart OTM avec couleur en fct du traitement
+```{r}
+classes = data$Treatment
+couleurs = c("dodgerblue3", "firebrick", "darkorange", "forestgreen","pink")
+couleurs_points = couleurs[classes]
+
+dotchart(data$Olive_Tail_Moment, pch=16, col=couleurs_points, xlab="OTM")
+legend("topright", legend=levels(classes), col=couleurs, pch=16)
+```
+
+
+```{r}
+```
