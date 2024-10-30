@@ -21,11 +21,16 @@ library(car)
 
 Import et traitement des données:
 ```{r}
-data = read.csv("data.csv", header = T)
-data = data[,-1]
+data = read.csv("data.csv",dec = ",", header = T)
 data[,1] = as.factor(data[,1])
 data[,2] = as.factor(data[,2])
 data[,3] = as.factor(data[,3])
+for (i in 4:ncol(data)){
+  data[,i] <- gsub(",", ".", data[,i])
+  data[,i] <- as.numeric(data[,i])
+}
+
+
 ```
 
 
@@ -109,7 +114,7 @@ ggplot(data, aes(x = fitted_values, y = residuals, color = Treatment)) +
 
 ## Avec log-normale
 mod_log_normale = glmmTMB(
-  log(Olive_Tail_Moment+1)+1 ~ Treatment + (1 | ID/PIC), # OTM+1 pour éviter les négatifs, et effet aléatoire "photo" imbriqué dans "individu"
+  log(Olive_Tail_Moment+1) ~ Treatment + (1 | ID/PIC), # OTM+1 pour éviter les négatifs, et effet aléatoire "photo" imbriqué dans "individu"
   data = data
 )
 # Vérification des résidus
