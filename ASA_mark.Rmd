@@ -14,6 +14,7 @@ library(factoextra)
 library(glmmTMB)
 library(ggplot2)
 library(MASS)
+library(car)
 ```
 
 
@@ -68,19 +69,53 @@ dotchart(data$Olive_Tail_Moment, pch=16, col=couleurs_points, xlab="OTM")
 legend("topright", legend=levels(classes), col=couleurs, pch=16)
 ```
 
-GLMM avec distribution gamma zero inflated
+GLMM avec différentes distributions
 ```{r}
-mod_zi_gamma <- glmmTMB(
+## Avec loi gamma (zero inflated)
+mod_zi_gamma = glmmTMB(
   Olive_Tail_Moment+1 ~ Treatment + (1 | ID/PIC), # OTM+1 pour éviter les négatifs, et effet aléatoire "photo" imbriqué dans "individu"
   family = ziGamma(link = "log"),  
   data = data
 )
-
-
 # Vérification des résidus
 summary(mod_zi_gamma)
 residuals <- residuals(mod_zi_gamma)
 fitted_values <- fitted(mod_zi_gamma)
+plot(fitted_values,residuals)
+
+ggplot(data, aes(x = fitted_values, y = residuals, color = Treatment)) +
+  geom_point(alpha = 0.6) +
+  labs(x = "Valeurs Ajustées", y = "Résidus", color = "Traitement") +
+  theme_minimal() +
+  theme(legend.position = "right")
+
+## Avec loi gamma
+mod_gamma = glmmTMB(
+  Olive_Tail_Moment+1 ~ Treatment + (1 | ID/PIC), # OTM+1 pour éviter les négatifs, et effet aléatoire "photo" imbriqué dans "individu"
+  family = Gamma(link = "log"),  
+  data = data
+)
+# Vérification des résidus
+summary(mod_gamma)
+residuals <- residuals(mod_gamma)
+fitted_values <- fitted(mod_gamma)
+plot(fitted_values,residuals)
+
+ggplot(data, aes(x = fitted_values, y = residuals, color = Treatment)) +
+  geom_point(alpha = 0.6) +
+  labs(x = "Valeurs Ajustées", y = "Résidus", color = "Traitement") +
+  theme_minimal() +
+  theme(legend.position = "right")
+
+## Avec log-normale
+mod_log_normale = glmmTMB(
+  log(Olive_Tail_Moment+1)+1 ~ Treatment + (1 | ID/PIC), # OTM+1 pour éviter les négatifs, et effet aléatoire "photo" imbriqué dans "individu"
+  data = data
+)
+# Vérification des résidus
+summary(mod_log_normale)
+residuals <- residuals(mod_log_normale)
+fitted_values <- fitted(mod_log_normale)
 plot(fitted_values,residuals)
 
 ggplot(data, aes(x = fitted_values, y = residuals, color = Treatment)) +
@@ -95,4 +130,13 @@ ggplot(data, aes(x = fitted_values, y = residuals, color = Treatment)) +
 Résidus vs. OTM
 ```{r}
 plot(data$Olive_Tail_Moment,residuals)
+```
+
+
+Holm-adjusted Tukey's pairwise comparison (Fait par l'étude)
+```{r}
+detach("package:FactoMineR", unload = TRUE)
+library(emmeans)
+emmeans_result <- emmeans(mod_log_normale, pairwise ~ Treatment)
+pairs(emmeans_result, adjust = "holm")
 ```
