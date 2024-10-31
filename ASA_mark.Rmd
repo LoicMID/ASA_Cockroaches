@@ -74,6 +74,14 @@ dotchart(data$Olive_Tail_Moment, pch=16, col=couleurs_points, xlab="OTM")
 legend("topright", legend=levels(classes), col=couleurs, pch=16)
 ```
 
+Histogramme pour caractériser la loi de distribution de la réponse
+
+```{r}
+hist(data$Olive_Tail_Moment, breaks = 100)
+```
+
+
+
 GLMM avec différentes distributions
 ```{r}
 ## Avec loi gamma (zero inflated)
@@ -137,7 +145,6 @@ Résidus vs. OTM
 plot(data$Olive_Tail_Moment,residuals)
 ```
 
-
 Holm-adjusted Tukey's pairwise comparison (Fait par l'étude)
 ```{r}
 detach("package:FactoMineR", unload = TRUE)
@@ -145,3 +152,11 @@ library(emmeans)
 emmeans_result <- emmeans(mod_log_normale, pairwise ~ Treatment)
 pairs(emmeans_result, adjust = "holm")
 ```
+
+Verif AIC
+```{r}
+AIC(mod_gamma)
+AIC(mod_log_normale)
+AIC(mod_zi_gamma)
+```
+
