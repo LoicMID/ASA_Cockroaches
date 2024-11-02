@@ -15,6 +15,9 @@ library(glmmTMB)
 library(ggplot2)
 library(MASS)
 library(car)
+library(ggeffects)
+library(dplyr)
+library(DHARMa)
 ```
 
 
@@ -145,6 +148,16 @@ Résidus vs. OTM
 plot(data$Olive_Tail_Moment,residuals)
 ```
 
+
+```{r}
+res_mod_log_normale <- resid(mod_log_normale)
+hist(res_mod_log_normale, breaks = 100, main = "Histogramme des résidus")
+res_mod_log_normale  <- simulateResiduals(fittedModel = mod_log_normale)
+plot(res_mod_log_normale)
+testOverdispersion(res_mod_log_normale)
+```
+
+
 Holm-adjusted Tukey's pairwise comparison (Fait par l'étude)
 ```{r}
 detach("package:FactoMineR", unload = TRUE)
@@ -158,5 +171,41 @@ Verif AIC
 AIC(mod_gamma)
 AIC(mod_log_normale)
 AIC(mod_zi_gamma)
+```
+
+```{r}
+head(data)
+summary(mod_log_normale)
+
+pred <- predict(mod_log_normale, newdata = data, type = "response", se.fit = TRUE)
+
+# Ajouter les prédictions et les intervalles de confiance au DataFrame `data`
+data$predicted_OTM <- pred$fit
+data$conf.low <- pred$fit - 1.96 * pred$se.fit  # Limite inférieure de l'IC à 95%
+data$conf.high <- pred$fit + 1.96 * pred$se.fit  # Limite supérieure de l'IC à 95%
+
+
+data_summary <- data %>%
+  group_by(Treatment) %>%
+  summarise(
+    mean_predicted_OTM = mean(predicted_OTM),
+    conf.low = mean_predicted_OTM - 1.96 * sd(predicted_OTM) / sqrt(n()),
+    conf.high = mean_predicted_OTM + 1.96 * sd(predicted_OTM) / sqrt(n())
+  )
+
+# Créer le graphique
+ggplot(data_summary, aes(x = Treatment, y = mean_predicted_OTM, color = Treatment)) +
+  geom_point(size = 3) +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2) +
+  labs(x = "Traitement", y = "Prédiction (log(OTM+1))", color = "Traitement") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplot(data_summary, aes(x = Treatment, y = mean_predicted_OTM, fill = Treatment)) +
+  geom_bar(stat = "identity", position = "dodge", width = 0.6) +  # Barres pour chaque moyenne
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2) +  # Barres d'erreur
+  labs(x = "Traitement", y = "Prédiction (log(OTM+1))", fill = "Traitement") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
