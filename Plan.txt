@@ -1,0 +1,67 @@
+
+Variables qualitative:
+- Traitement
+- ID individu
+- N° photo
+
+
+Variables quantitative
+- Head area
+- Tail_area
+- Head DNA
+- Tail DNA
+- Head DNA %
+- Tail DNA %
+- Head radius
+- Tail Length
+- Comet length
+- Olive tail moment
+
+
+Démarche: 
+
+1. Déterminer les variables d'intérêt pour répondre à la problématique.
+
+- Chercher la/les variable(s) les plus représentatives de la dégradation de l'ADN
+- D'après l'énoncé --> OTM
+- Scatterplot des corrélations --> Quasi toutes les variables fortement corrélées à OTM
+- ACP --> Le plan factoriel montre que la variation de la plupart des variables est liée à OTM (Normal vu que c'est un indice calculé à partir des autres variables)
+- Donc pas d'intérêt de toutes les conserver, OTM suffit
+
+2. Explorer la distribution des variables d'intérêt et les effets potentiels des X sur Y
+
+- Histogramme de Y (OTM), dotchart de Y, QQnorm --> Distribution gamma? Beaucoup de 0, hétérogénéité des valeurs mais surement imputable à l'effet d'une variable
+- summary des Xs (Traitement, ID, photo) --> Les classes sont équilibrées
+- Boxplot de OTM en fonction du traitement --> On observe une tendance entre les classes
+- Dotchart de OTM colorié en fct du traitement --> La classe H202 semble plus dispersé que les autres, mais les différences entre les autres traitements n'est pas clair
+
+- Etudier un potentiel effet d'intéraction entre les Xs ? Pas besoin car une seule variable qualitative
+Il faudra juste tester les effets aléatoires ensuite
+
+3. Construction du modèle
+
+- Construction du modèle linéaire généralisé/général mixte --> généralisé si on considère que Y suit une loi gamma, général si il suit une loi normale (dans le cas de la log normale), et mixte car on prend en compte l'effet aléatoire de la variabilité interindividuelle et interphoto. 
+- Summary(model) --> On observe la significativité des coefficients liés au différentes classe de traitement (On peut écrire l'équation à partir de ça 
+OTM = intercept + (trait1 = "", trait2 = "", trait3 = "", trait4 = "") (cf. cours de OUTREMAN)
+
+On ne peut pas vraiment décrire les différences inter traitement donc on fera un holm-adjusted Tukey's pairwise comparison pour cela
+
+Mais d'abord
+
+- Summary(modele) et intervals(modele) --> vérification de l'effet des facteur aléatoires emboités
+Interprétation de l'interval de confiance de la variation interindividuelle
+
+- On peut aussi faire un bootstrap (je vais essayer de le faire) pour tester si les facteurs aléatoires ont un effet significatif
+
+- nagelkerke(modele) --> Pseudo R² du modèle, permet de connaitre la part de variance de Y expliquée par X en prenant en compte l'effet aléatoire
+
+4. Validation de la modélisation
+
+Normalité des résidus --> ou autre distribution en fonction de ce qu'on a choisi
+
+Homogénéité de la variance --> residual vs. fitted , residuals vs. traitement
+
+Vérification des individus influents --> CookD(modele, newwd=T)
+
+5. Conclusions générales
+
