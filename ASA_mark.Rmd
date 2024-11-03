@@ -20,6 +20,7 @@ library(car)
 library(ggeffects)
 library(dplyr)
 library(DHARMa)
+library(emmeans)
 ```
 
 Import et traitement des données:
@@ -160,8 +161,6 @@ testOverdispersion(res_mod_log_normale)
 Holm-adjusted Tukey's pairwise comparison (Fait par l'étude)
 
 ```{r}
-detach("package:FactoMineR", unload = TRUE)
-library(emmeans)
 emmeans_result <- emmeans(mod_log_normale, pairwise ~ Treatment)
 pairs(emmeans_result, adjust = "holm")
 ```
