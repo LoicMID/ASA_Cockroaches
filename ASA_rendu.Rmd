@@ -1,0 +1,228 @@
+---
+title: "Analyse du jeu de données sur la dégradation de l’ADN due au stress thermique sur les blattes"
+author: "Loïc DAVID, Alexandre GRAVE, Hugo TESSIER, Marion SESIA et Pierre LAPORTE"
+date: "2024-10-29"
+output: 
+  html_document:
+    theme: cerulean
+    toc: true
+    toc_float: true
+    toc_depth: 3
+---
+
+## Contexte de l'étude
+
+Etude des effets du stress thermique sur la dégradation de l'ADN des blattes (*Gromphadorhina coquereliana*)
+
+Quatre traitements de stress thermiques ont été appliqué, H2O2, Cold, Freezing et Heat, avec la présence d'un groupe Control. Dans chacune de ces classes, 5 individus ont été identifié avec pour chacun des individus 10 photographies prisent. Ces photographies représentent les cellules prélevés des individus identifiés, et sur chacune de celle-ci toutes les mesures de notre jeu de donnée ont été faite.
+
+## Variables du jeu de donnée
+
+Notre jeu de donnée possède 13 variables :
+
+-   **treatment**, variable qualitative à 5 classes (H2O2, Cold, Freezing, Heat et Control)
+
+-   **ID**, variable qualitative nominales représentant les individus identifiés
+
+-   **PIC**, variable qualitative nominales représentant les photographies prisent pour chacun des individus
+
+-   **Head_area**, variable quantitative, surface de la tête de la comète
+
+-   **Tail_area** variable quantitative, surface de la queue de la comète
+
+-   **Head_DNA**, variable quantitive, surface de l’ADN dans la tête de la comète
+
+-   **Tail_DNA**, variable quantitative, surface de l’ADN dans la queue de la comète
+
+-   **Head_DNA\_%**, variable quantitative, pourcentage de l'ADN total dans la tête
+
+-   **Tail_DNA\_%**, variable quantitative, pourcentage de l'ADN total dans la queue, qui correspond au pourcentage d'ADN ayant migré
+
+-   **Head_Radius**, variable quantitative, rayon de la tête de la comète
+
+-   **Tail_Lenght**, variable quantitative, longueur de la queue de la comète, représentant la distance de migration de l'ADN
+
+-   **Comet_lenght**, variable quantitative, longueur de la comète
+
+-   **Olive_Tail_Moment**, variable quantitative, donnant une estimation de la proportion relative de l'ADN dans différents régions de la queue
+
+## Exploration du jeu de donnée
+
+### Packages
+
+```{r message=FALSE, warning=FALSE}
+
+# Représantation graphique
+library(ggplot2)
+library(GGally)
+library(FactoMineR)
+# Analyse statistique et modélisation
+library(factoextra)
+library(glmmTMB)
+library(MASS)
+library(car)
+```
+
+### Importation et traitement des données
+
+Préalablement les colones **ID** et **PIC** ont été modifié au vue de la structure hiérarchique de celles-ci. **ID** est une variable imbriquée dans la variable **treatement** , où chaque classe de **treatement** à un ensemble de classe d’**ID**. Le même imbriquement est présent pour **PIC**, qui est imbriqué dans la variable **ID**. Ces deux variables (**ID** et **PIC**) sont donc représenter par leur **treatement**, (ex : 1Con, pour l’individu 1 du traitement control), ou bien par leur **treatement** et leur ID (ex: 3F - 6, pour la photo 6 de l’individu 3 du traitement Freezing).
+
+```{r}
+
+data = read.csv("data.csv",dec = ",", header = T)
+data[,1] = as.factor(data[,1])
+data[,2] = as.factor(data[,2])
+data[,3] = as.factor(data[,3])
+
+for (i in 4:ncol(data)){
+  data[,i] <- gsub(",", ".", data[,i])
+  data[,i] <- as.numeric(data[,i])}
+
+summary(data)
+head(data)
+```
+
+### Corrélations entre variables quantitatives
+
+```{r}
+
+data_cor = data[,4:13]
+
+ggpairs(
+  data_cor,
+  upper = list(continuous = wrap("cor", size = 3)),
+  lower = list(continuous = wrap("points", size = 0.5)),
+  labeller = label_wrap_gen(width = 10)) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
+    axis.text.y = element_text(size = 8))
+```
+
+Une grande partie de nos variables sont corréler, ce qui était prévisible au vue des données récolté. Si l’on prend l’exemple de la variable **Tail_DNA\_%**, elle est corrélé négativement a 100% a **Head_DNA\_%** qui est le pourcentage d’ADN present dans la tête, mais aussi corrélé positivement a plus de 90% aux variables **Tail_DNA** et **Tail_area**, c’est a dire a la surface d’ADN dans la queue de la comète et la surface de la queue de la comète. Un grand nombre de nos varibles mesure des paramètres simailaire voir complémentaire, ce qui explique le grand nombre de variable corrélé.
+
+ACP des différentes variables
+
+```{r}
+
+data_ACP = data[,4:13] 
+ACP = PCA(data_ACP)
+
+fviz_pca_ind(ACP,
+             geom.ind = "point",
+             col.ind = data$Treatment,
+             palette = "jco",
+             addEllipses = TRUE,
+             legend.title = "Traitement")
+```
+
+Le cercle des corrélation de cette ACP faite sur l’entierté des variables nous confirme que les variables lié à la queue de la comète influ de la meme manière sur notre jeu de donnée. L’ACP sur les individus nous montre des groupes emboités pour le groupe contrôle et tout les traitements sauf pour le traitement H2O2.
+
+Un nouvelle ACP en conservant uniquement ls variables les moins corrélées, **Olive_Tail_Moment** (OTM), **Head_area** et **Head_DNA** a été faite :
+
+```{r}
+
+data_ACP2 = data[,c(4,6,13)]
+ACP2 = PCA(data_ACP2)
+
+fviz_pca_ind(ACP2,
+             geom.ind = "point",      # Utiliser des points pour les individus
+             col.ind = data$Treatment, # Colorier selon la variable Treatment
+             palette = "jco",         # Palette de couleurs (modifiable)
+             addEllipses = TRUE,      # Ajouter des ellipses par groupe de traitement
+             legend.title = "Traitement")
+```
+
+Cette ACP sur les individu, avec moins de variable corréler n’a pas permis une meilleur lectures des diffrents groupes. Globalement **OTM** et **Head_DNA**, semble fortement influencer notre jeu de donnée en répartissant nos individus sur l’axe horizontal de notre ACP.
+
+## Modélisation
+
+### Visualisation de de la distribution d’**OTM**, variable Y
+
+**OTM** à été choisi comme variable Y, car elle …
+
+```{r}
+
+classes = data$Treatment
+couleurs = c("dodgerblue3", "firebrick", "darkorange", "forestgreen","pink")
+couleurs_points = couleurs[classes]
+
+dotchart(data$Olive_Tail_Moment, pch=16, col=couleurs_points, xlab="OTM")
+legend("topright", legend=levels(classes), col=couleurs, pch=16)
+```
+
+Notre variable Y ne semble pas être distribuer Normalement, avec de nombreux individu proche de 0. Cette distribution est aussi uniquement positive (sauf erreur de mesure) au vue de la nature d’**OTM**, qui est une distance. Les traitements semblent aussi impacté la distribution de notre variable.
+
+GLMM avec différentes distributions
+
+```{r}
+
+## Avec loi gamma (zero inflated)
+mod_zi_gamma = glmmTMB(
+  Olive_Tail_Moment+1 ~ Treatment + (1 | ID/PIC), # OTM+1 pour éviter les négatifs, et effet aléatoire "photo" imbriqué dans "individu"
+  family = ziGamma(link = "log"),  
+  data = data
+)
+# Vérification des résidus
+summary(mod_zi_gamma)
+residuals <- residuals(mod_zi_gamma)
+fitted_values <- fitted(mod_zi_gamma)
+plot(fitted_values,residuals)
+
+ggplot(data, aes(x = fitted_values, y = residuals, color = Treatment)) +
+  geom_point(alpha = 0.6) +
+  labs(x = "Valeurs Ajustées", y = "Résidus", color = "Traitement") +
+  theme_minimal() +
+  theme(legend.position = "right")
+
+## Avec loi gamma
+mod_gamma = glmmTMB(
+  Olive_Tail_Moment+1 ~ Treatment + (1 | ID/PIC), # OTM+1 pour éviter les négatifs, et effet aléatoire "photo" imbriqué dans "individu"
+  family = Gamma(link = "log"),  
+  data = data
+)
+# Vérification des résidus
+summary(mod_gamma)
+residuals <- residuals(mod_gamma)
+fitted_values <- fitted(mod_gamma)
+plot(fitted_values,residuals)
+
+ggplot(data, aes(x = fitted_values, y = residuals, color = Treatment)) +
+  geom_point(alpha = 0.6) +
+  labs(x = "Valeurs Ajustées", y = "Résidus", color = "Traitement") +
+  theme_minimal() +
+  theme(legend.position = "right")
+
+## Avec log-normale
+mod_log_normale = glmmTMB(
+  log(Olive_Tail_Moment+1) ~ Treatment + (1 | ID/PIC), # OTM+1 pour éviter les négatifs, et effet aléatoire "photo" imbriqué dans "individu"
+  data = data
+)
+# Vérification des résidus
+summary(mod_log_normale)
+residuals <- residuals(mod_log_normale)
+fitted_values <- fitted(mod_log_normale)
+plot(fitted_values,residuals)
+
+ggplot(data, aes(x = fitted_values, y = residuals, color = Treatment)) +
+  geom_point(alpha = 0.6) +
+  labs(x = "Valeurs Ajustées", y = "Résidus", color = "Traitement") +
+  theme_minimal() +
+  theme(legend.position = "right")
+```
+
+Résidus vs. OTM
+
+```{r}
+
+plot(data$Olive_Tail_Moment,residuals)
+```
+
+Holm-adjusted Tukey's pairwise comparison (Fait par l'étude)
+
+```{r}
+
+detach("package:FactoMineR", unload = TRUE)
+library(emmeans)
+emmeans_result <- emmeans(mod_log_normale, pairwise ~ Treatment)
+pairs(emmeans_result, adjust = "holm")
+```
