@@ -5,8 +5,10 @@ date: "2024-10-29"
 output: html_document
 ---
 
+test push
 
 Packages:
+
 ```{r}
 library(GGally)
 library(FactoMineR)
@@ -20,9 +22,8 @@ library(dplyr)
 library(DHARMa)
 ```
 
-
-
 Import et traitement des données:
+
 ```{r}
 data = read.csv("data.csv",dec = ",", header = T)
 data[,1] = as.factor(data[,1])
@@ -36,14 +37,15 @@ for (i in 4:ncol(data)){
 
 ```
 
-
 Corrélations entre variables:
+
 ```{r}
 data_cor = data[,4:13]
 ggpairs(data_cor) 
 ```
 
 ACP des différentes variables
+
 ```{r}
 data_ACP = data[,4:13] 
 ACP = PCA(data_ACP)
@@ -68,6 +70,7 @@ fviz_pca_ind(ACP2,
 ```
 
 Dotchart OTM avec couleur en fct du traitement
+
 ```{r}
 classes = data$Treatment
 couleurs = c("dodgerblue3", "firebrick", "darkorange", "forestgreen","pink")
@@ -83,9 +86,8 @@ Histogramme pour caractériser la loi de distribution de la réponse
 hist(data$Olive_Tail_Moment, breaks = 100)
 ```
 
-
-
 GLMM avec différentes distributions
+
 ```{r}
 ## Avec loi gamma (zero inflated)
 mod_zi_gamma = glmmTMB(
@@ -141,13 +143,11 @@ ggplot(data, aes(x = fitted_values, y = residuals, color = Treatment)) +
   theme(legend.position = "right")
 ```
 
-
-
 Résidus vs. OTM
+
 ```{r}
 plot(data$Olive_Tail_Moment,residuals)
 ```
-
 
 ```{r}
 res_mod_log_normale <- resid(mod_log_normale)
@@ -157,8 +157,8 @@ plot(res_mod_log_normale)
 testOverdispersion(res_mod_log_normale)
 ```
 
-
 Holm-adjusted Tukey's pairwise comparison (Fait par l'étude)
+
 ```{r}
 detach("package:FactoMineR", unload = TRUE)
 library(emmeans)
@@ -167,6 +167,7 @@ pairs(emmeans_result, adjust = "holm")
 ```
 
 Verif AIC
+
 ```{r}
 AIC(mod_gamma)
 AIC(mod_log_normale)
@@ -208,4 +209,3 @@ ggplot(data_summary, aes(x = Treatment, y = mean_predicted_OTM, fill = Treatment
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
-
