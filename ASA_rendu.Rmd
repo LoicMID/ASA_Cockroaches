@@ -14,7 +14,7 @@ output:
 
 Etude des effets du stress thermique sur la dégradation de l'ADN des blattes (*Gromphadorhina coquereliana*)
 
-Quatre traitements de stress thermiques ont été appliqué, H2O2, Cold, Freezing et Heat, avec la présence d'un groupe Control. Dans chacune de ces classes, 5 individus ont été identifié avec pour chacun des individus 10 photographies prisent. Ces photographies représentent les cellules prélevés des individus identifiés, et sur chacune de celle-ci toutes les mesures de notre jeu de donnée ont été faite.
+Quatre traitements de stress thermiques ont été appliqué, H2O2, Cold, Freezing et Heat, avec la présence d'un groupe Control. Dans chacune de ces classes, 5 individus ont été identifiés avec pour chacun des individus 10 photographies prisent. Ces photographies représentent les cellules prélevés des individus identifiés, et sur chacune de celle-ci, toutes les mesures de notre jeu de donnée ont été faite.
 
 ## Variables du jeu de donnée
 
@@ -22,7 +22,7 @@ Notre jeu de donnée possède 13 variables :
 
 -   **treatment**, variable qualitative à 5 classes (H2O2, Cold, Freezing, Heat et Control)
 
--   **ID**, variable qualitative nominales représentant les individus identifiés
+-   **ID**, variable qualitative nominales représentant les individus traités pour chaque traitement
 
 -   **PIC**, variable qualitative nominales représentant les photographies prisent pour chacun des individus
 
@@ -65,7 +65,7 @@ library(car)
 
 ### Importation et traitement des données
 
-Préalablement les colones **ID** et **PIC** ont été modifié au vue de la structure hiérarchique de celles-ci. **ID** est une variable imbriquée dans la variable **treatement** , où chaque classe de **treatement** à un ensemble de classe d’**ID**. Le même imbriquement est présent pour **PIC**, qui est imbriqué dans la variable **ID**. Ces deux variables (**ID** et **PIC**) sont donc représenter par leur **treatement**, (ex : 1Con, pour l’individu 1 du traitement control), ou bien par leur **treatement** et leur ID (ex: 3F - 6, pour la photo 6 de l’individu 3 du traitement Freezing).
+Préalablement les colonnes **ID** et **PIC** ont été modifiées au vue de la structure hiérarchique de celles-ci. Ces variables nominales attribuaient un nom similaire, ici un chiffre, à des individus ou photos appartenant à un traitement différent. Les noms ont donc été modifiés pour ne pas créer de confusion lors de la modélisation.
 
 ```{r}
 
@@ -82,7 +82,13 @@ summary(data)
 head(data)
 ```
 
+Quelques problèmes de mise en forme ont également été réglé, notamment la notation des décimales et le type des variables.
+
+## Sélection de la variable réponse
+
 ### Corrélations entre variables quantitatives
+
+Nous disposons de 10 variables différentes, et nous voulons isoler celle qui nous rensigne le plus sur la dégradation de l'ADN. Nous effectuons donc une analyse exploratoire des données, tout d'abord à l'aide d'une ACP.
 
 ```{r}
 
